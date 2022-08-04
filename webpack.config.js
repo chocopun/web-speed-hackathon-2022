@@ -4,6 +4,7 @@ const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const nodeExternals = require("webpack-node-externals");
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+const TerserPlugin = require("terser-webpack-plugin");
 
 function abs(...args) {
   return path.join(__dirname, ...args);
@@ -17,9 +18,9 @@ const DIST_PUBLIC = abs("./dist/public");
 /** @type {Array<import('webpack').Configuration>} */
 module.exports = [
   {
-    devtool: "inline-source-map",
+    devtool: process.env.NODE_ENV === "production" ? false :"inline-source-map",
     entry: path.join(SRC_ROOT, "client/index.jsx"),
-    mode: "development",
+    mode: 'production',
     module: {
       rules: [
         {
@@ -40,7 +41,7 @@ module.exports = [
                   "@babel/preset-env",
                   {
                     modules: "cjs",
-                    spec: true,
+                    spec: process.env.NODE_ENV !== "production",
                   },
                 ],
                 "@babel/preset-react",
@@ -63,13 +64,26 @@ module.exports = [
     resolve: {
       extensions: [".js", ".jsx"],
     },
+    optimization: {
+      minimize: true,
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+            compress: true,
+            mangle: true,
+            keep_fnames: true,
+            keep_classnames: true,
+          },
+        }),
+      ],
+    },
     target: "web",
   },
   {
-    devtool: "inline-source-map",
+    devtool: process.env.NODE_ENV === "production" ? false :"inline-source-map",
     entry: path.join(SRC_ROOT, "server/index.js"),
     externals: [nodeExternals()],
-    mode: "development",
+    mode: 'production',
     module: {
       rules: [
         {
@@ -83,7 +97,7 @@ module.exports = [
                   "@babel/preset-env",
                   {
                     modules: "cjs",
-                    spec: true,
+                    spec: process.env.NODE_ENV !== "production",
                   },
                 ],
                 "@babel/preset-react",
@@ -100,6 +114,19 @@ module.exports = [
     },
     resolve: {
       extensions: [".mjs", ".js", ".jsx"],
+    },
+    optimization: {
+      minimize: true,
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+            compress: true,
+            mangle: true,
+            keep_fnames: true,
+            keep_classnames: true,
+          },
+        }),
+      ],
     },
     target: "node",
   },
